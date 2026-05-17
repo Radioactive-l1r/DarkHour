@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DarkHour //   Utility</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --card-bg: #0d0d0d;
+            --border-color: #1a1a1a;
+            --text-main: #ffffff;
+            --text-muted: #555555;
+            --accent: #ffffff;
+            --danger: #ff3333;
+            --success: #00ff66;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (min-width: 768px) {
+            body { padding: 30px; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        @media (min-width: 768px) {
+            button {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+            }
+        }
+
+        button:hover {
+            background: var(--text-main);
+            color: var(--bg-color);
+        }
+
+        #shareUrlBtn {
+            border-color: #00bfff;
+            color: #00bfff;
+        }
+        #shareUrlBtn:hover {
+            background: #00bfff;
+            color: var(--bg-color);
+        }
+
+        /* Grid View Layout */
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .project-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            cursor: pointer;
+            position: relative;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .project-card:hover {
+            border-color: #333;
+        }
+
+        .project-card.active-focus {
+            border-color: var(--accent);
+        }
+
+        .project-card.running-pulse {
+            border-color: #1b3a1b;
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.05);
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .project-name {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 1rem;
+            font-weight: 500;
+            width: 100%;
+            outline: none;
+        }
+
+        /* ContentEditable Time Display Style */
+        .time-display {
+            font-size: 1.5rem;
+            font-family: monospace;
+            font-weight: 300;
+            padding: 4px;
+            letter-spacing: -0.5px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            width: max-content;
+            outline: none;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .time-display[contenteditable="true"] {
+            background: #111111;
+            border-color: #333333;
+            color: var(--success);
+        }
+
+        .time-display span.ms {
+            color: #444;
+            font-size: 1.1rem;
+        }
+        
+        .time-display[contenteditable="true"] span.ms {
+            color: var(--success);
+        }
+
+        .project-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-play {
+            background: var(--text-main);
+            color: var(--bg-color);
+            font-weight: 600;
+        }
+
+        .btn-delete, .btn-reset, .btn-lap {
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-delete:hover { background: none; color: var(--danger); border-color: var(--danger); }
+        .btn-reset:hover { background: none; color: #ffaa00; border-color: #ffaa00; }
+        .btn-lap:hover { background: none; color: #00bfff; border-color: #00bfff; }
+
+        .btn-delete { margin-left: auto; }
+
+        /* Fullscreen Overlay Mode & Two-Column Split Architecture */
+        .fullscreen-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-color);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        @media (min-width: 768px) {
+            .fullscreen-overlay {
+                padding: 40px;
+                overflow-y: hidden;
+            }
+        }
+
+        .fullscreen-overlay .close-fs {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+        }
+
+        @media (min-width: 768px) {
+            .fullscreen-overlay .close-fs {
+                top: 40px;
+                left: 40px;
+            }
+        }
+
+        .fs-split-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: auto;
+            padding-top: 50px;
+            gap: 40px;
+        }
+
+        @media (min-width: 768px) {
+            .fs-split-container {
+                flex-direction: row;
+                height: 100%;
+                padding-top: 40px;
+                gap: 60px;
+            }
+        }
+
+        /* Left Side: Interface */
+        .fs-left-panel {
+            flex: 1.2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        @media (min-width: 768px) {
+            .fs-left-panel {
+                padding-left: 40px;
+            }
+        }
+
+        .created-at-stamp {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: monospace;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .fullscreen-overlay .project-name {
+            font-size: 1.6rem;
+            text-align: left;
+            margin-bottom: 10px;
+            max-width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .fullscreen-overlay .project-name {
+                font-size: 2.2rem;
+                margin-bottom: 15px;
+            }
+        }
+
+        .fullscreen-overlay .time-display {
+            font-size: 2.8rem;
+            margin-bottom: 24px;
+            max-width: 100%;
+            word-break: break-all;
+        }
+
+        @media (min-width: 768px) {
+            .fullscreen-overlay .time-display {
+                font-size: 5.5rem;
+                margin-bottom: 40px;
+            }
+        }
+
+        .fullscreen-overlay .time-display span.ms {
+            font-size: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            .fullscreen-overlay .time-display span.ms {
+                font-size: 3.5rem;
+            }
+        }
+
+        .fullscreen-overlay .project-actions button {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            border-radius: 6px;
+        }
+
+        @media (min-width: 768px) {
+            .fullscreen-overlay .project-actions button {
+                padding: 14px 32px;
+                font-size: 1rem;
+            }
+        }
+
+        /* Right Side: Activity Laps Panel */
+        .fs-right-panel {
+            flex: 1;
+            border-left: none;
+            border-top: 1px solid var(--border-color);
+            padding-top: 24px;
+            padding-left: 0;
+            display: flex;
+            flex-direction: column;
+            max-height: 400px;
+        }
+
+        @media (min-width: 768px) {
+            .fs-right-panel {
+                border-top: none;
+                border-left: 1px solid var(--border-color);
+                padding-top: 0;
+                padding-left: 40px;
+                height: 100%;
+                max-height: none;
+                overflow-y: hidden;
+            }
+        }
+
+        .laps-header {
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+        }
+
+        .laps-list-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .laps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .lap-item {
+            background: #090909;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: monospace;
+            gap: 12px;
+        }
+
+        @media (min-width: 768px) {
+            .lap-item {
+                padding: 14px 16px;
+                gap: 20px;
+            }
+        }
+
+        .lap-time-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 135px;
+        }
+
+        @media (min-width: 768px) {
+            .lap-time-meta {
+                min-width: 160px;
+            }
+        }
+
+        .lap-duration {
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        @media (min-width: 768px) {
+            .lap-duration { font-size: 1.1rem; }
+        }
+
+        .lap-wall-time {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+        }
+
+        .lap-description {
+            background: transparent;
+            border: none;
+            border-bottom: 1px dashed #222;
+            color: #888;
+            font-size: 0.85rem;
+            width: 100%;
+            padding: 2px 4px;
+            outline: none;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .lap-description:focus {
+            color: var(--text-main);
+            border-bottom-color: var(--accent);
+        }
+
+        .btn-delete-lap {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 4px;
+        }
+        .btn-delete-lap:hover {
+            color: var(--danger);
+            background: none;
+        }
+
+        .instructions {
+            margin-top: 40px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        footer {
+            margin-top: 40px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .backup-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .backup-io {
+            width: 100%;
+            max-width: 400px;
+            background: #0d0d0d;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-family: monospace;
+            font-size: 0.75rem;
+            padding: 8px;
+            border-radius: 4px;
+            resize: none;
+            height: 35px;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="mainContainer">
+        <header>
+            <h1>DARKHOUR //  </h1>
+            <div class="header-actions">
+                <button id="shareUrlBtn">🔗 Link</button>
+                <button id="addProjectBtn">+ Project</button>
+            </div>
+        </header>
+
+        <div id="projectGrid" class="project-grid">
+            <!-- Dynamic Injection -->
+        </div>
+
+        <div class="instructions">
+            <p>Click <strong>Link</strong> to backup your project database directly into a shareable URL string.</p>
+            <p>Click a grid card to open its <strong>Full View</strong> layout.</p>
+            <p>Click directly on the time string to <strong>edit text in place</strong>. Press <strong>Enter</strong> to save.</p>
+            <p>Press <strong>Spacebar</strong> to pause/play the open project.</p>
+        </div>
+
+        <footer>
+            <div class="backup-controls">
+                <button id="exportBtn">Export Data</button>
+                <button id="importBtn">Import Data</button>
+            </div>
+            <textarea id="backupCode" class="backup-io" placeholder="Backup string data here..."></textarea>
+        </footer>
+    </div>
+
+    <!-- Fullscreen View Overlay with Fluid Responsive Columns -->
+    <div id="fullscreenOverlay" class="fullscreen-overlay">
+        <button class="close-fs" id="closeFsBtn">← Back</button>
+        
+        <div class="fs-split-container">
+            <!-- Core Stopwatch Interface -->
+            <div class="fs-left-panel">
+                <div id="fsCardContent" style="display: flex; flex-direction: column; align-items: flex-start; width: 100%;"></div>
+            </div>
+            
+            <!-- Activity Laps Panel -->
+            <div class="fs-right-panel">
+                <div class="laps-header">Activity Logs / Laps</div>
+                <div class="laps-list-wrapper">
+                    <div id="lapsList" class="laps-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // App State
+        let projects = [
+            { id: '1', name: 'Mission Alpha', msTracked: 0, isRunning: false, createdAt: new Date().toLocaleString(), laps: [] }
+        ];
+        
+        let lastActiveProjectId = null;
+        let fullscreenProjectId = null; 
+        let animationFrameId = null;
+        let lastTimestamp = null;
+
+        const projectGridEl = document.getElementById('projectGrid');
+        const addProjectBtn = document.getElementById('addProjectBtn');
+        const shareUrlBtn = document.getElementById('shareUrlBtn');
+        const fullscreenOverlay = document.getElementById('fullscreenOverlay');
+        const closeFsBtn = document.getElementById('closeFsBtn');
+        const fsCardContent = document.getElementById('fsCardContent');
+        const lapsListEl = document.getElementById('lapsList');
+        const backupCode = document.getElementById('backupCode');
+        const exportBtn = document.getElementById('exportBtn');
+        const importBtn = document.getElementById('importBtn');
+
+        function initAppLifecycle() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const stateParam = urlParams.get('data');
+
+            if (stateParam) {
+                try {
+                    const parsed = JSON.parse(decodeURIComponent(atob(stateParam)));
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        projects = parsed;
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        saveToLocalStorage();
+                    }
+                } catch (e) {
+                    console.error("Failed parsing URL parameters:", e);
+                }
+            } else {
+                const localData = localStorage.getItem('darkhour_stopwatches');
+                if (localData) {
+                    try { projects = JSON.parse(localData); } catch(e) {}
+                }
+            }
+            lastActiveProjectId = localStorage.getItem('darkhour_active_id') || (projects[0] ? projects[0].id : null);
+        }
+
+        function runningLoop(timestamp) {
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const delta = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+
+            let changed = false;
+            projects.forEach(project => {
+                if (project.isRunning) {
+                    project.msTracked += delta;
+                    changed = true;
+                }
+            });
+
+            if (changed) {
+                saveToLocalStorage();
+                projects.forEach(project => {
+                    const displays = document.querySelectorAll(`.time-display[data-id="${project.id}"]`);
+                    displays.forEach(d => {
+                        if (d.getAttribute('contenteditable') !== 'true') {
+                            d.innerHTML = formatTimeStrings(project.msTracked);
+                        }
+                    });
+                });
+            }
+            animationFrameId = requestAnimationFrame(runningLoop);
+        }
+
+        function formatTimeStrings(totalMs) {
+            let rem = Math.floor(totalMs);
+            const ms = (rem % 1000).toString().padStart(3, '0').slice(0, 2);
+            rem = Math.floor(rem / 1000);
+            const secs = (rem % 60).toString().padStart(2, '0');
+            rem = Math.floor(rem / 60);
+            const mins = (rem % 60).toString().padStart(2, '0');
+            rem = Math.floor(rem / 60);
+            const hrs = (rem % 24).toString().padStart(2, '0');
+            const days = Math.floor(rem / 24);
+
+            return `${days}d ${hrs}:${mins}:${secs}<span class="ms">:${ms}</span>`;
+        }
+
+        function parseStringToMs(timeStr) {
+            try {
+                const cleanStr = timeStr.replace(/<[^>]*>/g, '').replace(/d/gi, '').replace(/\s+/g, ':');
+                const parts = cleanStr.split(':').map(val => parseInt(val) || 0);
+                if (parts.length < 5) return null;
+                const d = parts[0]; const h = parts[1]; const m = parts[2]; const s = parts[3]; const ms = parts[4] * 10;
+                return (d * 86400000) + (h * 3600000) + (m * 60000) + (s * 1000) + ms;
+            } catch (e) { return null; }
+        }
+
+        function render() {
+            projectGridEl.innerHTML = '';
+            projects.forEach(project => {
+                const card = createCardElement(project, false);
+                projectGridEl.appendChild(card);
+            });
+
+            if (fullscreenProjectId) {
+                const activeProj = projects.find(p => p.id === fullscreenProjectId);
+                if (activeProj) {
+                    fsCardContent.innerHTML = '';
+                    const fsCard = createCardElement(activeProj, true);
+                    fsCardContent.appendChild(fsCard);
+                    renderLaps(activeProj);
+                } else {
+                    closeFullscreen();
+                }
+            }
+        }
+
+        function renderLaps(project) {
+            lapsListEl.innerHTML = '';
+            if (!project.laps || project.laps.length === 0) {
+                lapsListEl.innerHTML = `<div style="color: #333; font-size: 0.8rem; font-family: monospace;">No logged activity laps yet.</div>`;
+                return;
+            }
+
+            [...project.laps].reverse().forEach((lap, index) => {
+                const actualIndex = project.laps.length - 1 - index;
+                const item = document.createElement('div');
+                item.className = 'lap-item';
+                item.innerHTML = `
+                    <div class="lap-time-meta">
+                        <div class="lap-duration">${lap.stopwatchTime}</div>
+                        <div class="lap-wall-time">${lap.recordedAt}</div>
+                    </div>
+                    <input type="text" class="lap-description" value="${lap.desc || ''}" placeholder="Note...">
+                    <button class="btn-delete-lap">✕</button>
+                `;
+
+                const descInput = item.querySelector('.lap-description');
+                descInput.addEventListener('input', (e) => {
+                    project.laps[actualIndex].desc = e.target.value;
+                    saveToLocalStorage();
+                });
+
+                item.querySelector('.btn-delete-lap').addEventListener('click', () => {
+                    project.laps.splice(actualIndex, 1);
+                    saveToLocalStorage();
+                    renderLaps(project);
+                });
+
+                lapsListEl.appendChild(item);
+            });
+        }
+
+        function createCardElement(project, isFullscreenMode) {
+            const card = document.createElement('div');
+            
+            let cardClasses = `project-card`;
+            if (project.id === lastActiveProjectId) cardClasses += ' active-focus';
+            if (project.isRunning && !isFullscreenMode) cardClasses += ' running-pulse';
+            card.className = cardClasses;
+
+            if (isFullscreenMode) {
+                card.style.width = '100%';
+                card.style.background = 'transparent';
+                card.style.border = 'none';
+                card.style.cursor = 'default';
+                card.style.padding = '0';
+            }
+
+            card.innerHTML = `
+                ${isFullscreenMode ? `<div class="created-at-stamp">Initialized: ${project.createdAt || 'N/A'}</div>` : ''}
+                <div class="project-header">
+                    <input type="text" class="project-name" data-id="${project.id}" value="${project.name}" placeholder="Project Name" style="${isFullscreenMode ? 'font-size: 1.8rem; margin-bottom: 6px;' : ''}">
+                </div>
+                
+                <div class="time-display" data-id="${project.id}" contenteditable="false" spellcheck="false">${formatTimeStrings(project.msTracked)}</div>
+
+                <div class="project-actions">
+                    ${isFullscreenMode ? `<button class="${project.isRunning ? '' : 'btn-play'} toggle-btn">${project.isRunning ? 'Pause' : 'Play'}</button>` : ''}
+                    ${isFullscreenMode ? `<button class="btn-lap">Lap</button>` : ''}
+                    ${isFullscreenMode ? `<button class="btn-reset">Reset</button>` : ''}
+                    ${!isFullscreenMode ? `<button class="btn-delete">Delete</button>` : ''}
+                </div>
+            `;
+
+            if (!isFullscreenMode) {
+                card.addEventListener('click', () => {
+                    lastActiveProjectId = project.id;
+                    localStorage.setItem('darkhour_active_id', project.id);
+                    openFullscreen(project.id);
+                });
+            }
+
+            const nameInput = card.querySelector('.project-name');
+            nameInput.addEventListener('click', (e) => e.stopPropagation());
+            nameInput.addEventListener('input', (e) => {
+                project.name = e.target.value;
+                saveToLocalStorage();
+                document.querySelectorAll(`.project-name[data-id="${project.id}"]`).forEach(input => {
+                    if (input !== e.target) input.value = e.target.value;
+                });
+            });
+
+            if (isFullscreenMode) {
+                card.querySelector('.toggle-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleProject(project.id);
+                });
+
+                card.querySelector('.btn-lap').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if(!project.laps) project.laps = [];
+                    
+                    const newLap = {
+                        stopwatchTime: formatTimeStrings(project.msTracked).replace(/<[^>]*>/g, ''),
+                        recordedAt: new Date().toLocaleString(),
+                        desc: ''
+                    };
+                    project.laps.push(newLap);
+                    saveToLocalStorage();
+                    renderLaps(project);
+                });
+
+                card.querySelector('.btn-reset').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm("Reset tracking parameters to 0 and purge all logs?")) {
+                        project.msTracked = 0;
+                        project.isRunning = false;
+                        project.laps = [];
+                        saveToLocalStorage();
+                        render();
+                    }
+                });
+            } else {
+                card.querySelector('.btn-delete').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteProject(project.id);
+                });
+            }
+
+            const displayEl = card.querySelector('.time-display');
+            displayEl.addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                if (displayEl.getAttribute('contenteditable') === 'true') return;
+                if (project.isRunning) toggleProject(project.id);
+                displayEl.innerText = displayEl.innerText.replace(/\s+/g, ' '); 
+                displayEl.setAttribute('contenteditable', 'true');
+                displayEl.focus();
+            });
+
+            const commitEditableTimeChanges = () => {
+                if (displayEl.getAttribute('contenteditable') !== 'true') return;
+                const parsedMs = parseStringToMs(displayEl.innerText);
+                if (parsedMs !== null) project.msTracked = parsedMs;
+                displayEl.setAttribute('contenteditable', 'false');
+                saveToLocalStorage();
+                render();
+            };
+
+            displayEl.addEventListener('blur', commitEditableTimeChanges);
+            displayEl.addEventListener('keydown', (e) => {
+                e.stopPropagation(); 
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    commitEditableTimeChanges();
+                }
+            });
+
+            return card;
+        }
+
+        function toggleProject(id) {
+            projects = projects.map(p => p.id === id ? { ...p, isRunning: !p.isRunning } : p);
+            lastActiveProjectId = id;
+            localStorage.setItem('darkhour_active_id', id);
+            saveToLocalStorage();
+            render();
+        }
+
+        function deleteProject(id) {
+            if (confirm("Delete this profile archive?")) {
+                projects = projects.filter(p => p.id !== id);
+                if (lastActiveProjectId === id) {
+                    lastActiveProjectId = projects.length > 0 ? projects[0].id : null;
+                    localStorage.setItem('darkhour_active_id', lastActiveProjectId);
+                }
+                saveToLocalStorage();
+                render();
+            }
+        }
+
+        function openFullscreen(id) {
+            fullscreenProjectId = id;
+            fullscreenOverlay.style.display = 'block';
+            render();
+        }
+
+        function closeFullscreen() {
+            if (fullscreenProjectId) {
+                const openProject = projects.find(p => p.id === fullscreenProjectId);
+                if (openProject && openProject.isRunning) openProject.isRunning = false;
+            }
+            fullscreenProjectId = null;
+            fullscreenOverlay.style.display = 'none';
+            saveToLocalStorage();
+            render();
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('darkhour_stopwatches', JSON.stringify(projects));
+        }
+
+        shareUrlBtn.addEventListener('click', () => {
+            const stateString = btoa(encodeURIComponent(JSON.stringify(projects)));
+            const shareableUrl = `${window.location.origin}${window.location.pathname}?data=${stateString}`;
+            
+            navigator.clipboard.writeText(shareableUrl).then(() => {
+                alert("Tactical link copied to clipboard!");
+            }).catch(err => {
+                backupCode.value = shareableUrl;
+                backupCode.select();
+                alert("Link copied to input box below!");
+            });
+        });
+
+        exportBtn.addEventListener('click', () => {
+            const dataStr = btoa(encodeURIComponent(JSON.stringify(projects)));
+            backupCode.value = dataStr;
+            backupCode.select();
+            alert("Raw database string generated below.");
+        });
+
+        importBtn.addEventListener('click', () => {
+            const dataStr = backupCode.value.trim();
+            if (!dataStr) return alert("Paste your database block first.");
+            try {
+                const parsed = JSON.parse(decodeURIComponent(atob(dataStr)));
+                if (Array.isArray(parsed)) {
+                    if (confirm("Overwrite local profiles list?")) {
+                        projects = parsed;
+                        lastActiveProjectId = projects[0] ? projects[0].id : null;
+                        saveToLocalStorage();
+                        render();
+                        backupCode.value = '';
+                        alert("Database overwritten successfully.");
+                    }
+                }
+            } catch (e) { alert("Data transmission match error."); }
+        });
+
+        addProjectBtn.addEventListener('click', () => {
+            const newId = Date.now().toString();
+            projects.push({
+                id: newId,
+                name: `Mission ${projects.length + 1}`,
+                msTracked: 0,
+                isRunning: false,
+                createdAt: new Date().toLocaleString(),
+                laps: []
+            });
+            lastActiveProjectId = newId;
+            localStorage.setItem('darkhour_active_id', newId);
+            saveToLocalStorage();
+            render();
+        });
+
+        closeFsBtn.addEventListener('click', closeFullscreen);
+
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement.getAttribute('contenteditable') === 'true' || 
+                document.activeElement.tagName === 'INPUT' || 
+                document.activeElement.tagName === 'TEXTAREA') return;
+
+            if (e.code === 'Space') {
+                e.preventDefault();
+                const targetId = fullscreenProjectId || lastActiveProjectId || (projects[0] ? projects[0].id : null);
+                if (targetId) toggleProject(targetId);
+            }
+            if (e.key === 'Escape' && fullscreenProjectId) {
+                closeFullscreen();
+            }
+        });
+
+        initAppLifecycle();
+        render();
+        animationFrameId = requestAnimationFrame(runningLoop);
+    </script>
+</body>
+</html>
